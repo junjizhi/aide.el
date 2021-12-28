@@ -52,7 +52,7 @@
   "Send the region to OpenAI autocomplete engine and get the result"
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
-         (result (jz/openai-complete openai-api-key region 50)))
+         (result (aide-openai-complete openai-api-key region 50)))
     (message "%s" result)))
 
 (provide 'aide)
