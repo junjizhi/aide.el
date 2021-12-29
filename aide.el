@@ -52,8 +52,32 @@
   "Send the region to OpenAI autocomplete engine and get the result"
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
-         (result (aide-openai-complete openai-api-key region 50)))
+         (result (aide--openai-complete-string region)))
     (message "%s" result)))
+
+(defun aide-openai-complete-region-insert (start end)
+  "Send the region to OpenAI autocomplete engine and insert the
+qresult to the end of buffer"
+  (interactive "r")
+  (let* ((region (buffer-substring-no-properties start end))
+         (result (aide--openai-complete-string region)))
+    (goto-char (point-max))
+    (insert (format "\n%s" result))))
+
+(defun aide-openai-complete-buffer-insert ()
+  "Send the ENTIRE buffer to OpenAI autocomplete engine and insert the
+qresult to the end of buffer"
+  (interactive)
+  (let* ((region nil) (result nil))
+    (setq region (buffer-substring-no-properties (point-min) (point-max)))
+    (setq result (aide--openai-complete-string region))
+    (goto-char (point-max))
+    (insert "\n" result)))
+
+;; private
+
+(defun aide--openai-complete-string (string)
+  (aide-openai-complete openai-api-key string 50))
 
 (provide 'aide)
 ;;; aide.el ends here
