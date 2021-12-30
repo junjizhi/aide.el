@@ -109,7 +109,9 @@ START and END are selected region boundaries."
     (setq region (buffer-substring-no-properties (point-min) (point-max)))
     (setq result (aide--openai-complete-string region))
     (goto-char (point-max))
-    (insert "\n" result)))
+    (insert "\n" result)
+    (highlight-regexp result 'hl-todo)
+    (fill-paragraph)))
 
 ;; private
 

@@ -4,6 +4,10 @@ An Emacs front end for GPT APIs like OpenAI.
 
   > Note: This is still alpha software. Use with caution.
 
+## Demo
+
+![aide.ei-demo](https://user-images.githubusercontent.com/2715151/147772615-da36b3ab-a32a-4f7f-b185-e62f3972f8b7.gif)
+
 ## Usage
 
 Prerequisite:
