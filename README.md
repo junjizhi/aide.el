@@ -8,6 +8,15 @@ An Emacs front end for GPT APIs like OpenAI.
 
 ![aide.ei-demo](https://user-images.githubusercontent.com/2715151/147772615-da36b3ab-a32a-4f7f-b185-e62f3972f8b7.gif)
 
+## Installation
+
+__Dependency__: aide.el depends on [emacs-request](https://github.com/tkf/emacs-request) package.
+
+I haven't uploaded aide.el to any package repo yet (e.g., MELPA), so you have to install manually for now: 
+
+Copy the content of `aide.el` to Emacs and evaluate it. 
+
+
 ## Usage
 
 Prerequisite:
