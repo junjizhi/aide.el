@@ -34,9 +34,30 @@
   :prefix "aide-")
 
 (defcustom aide-max-tokens 100
-  "The max-tokens paramater that aide.el would send to OpenAI API."
+  "The max-tokens paramater that aide.el sends to OpenAI API."
   :type 'integer
   :group 'aide)
+
+(defcustom aide-temperature 0
+  "The temperature paramater that aide.el sends to OpenAI API."
+  :type 'float
+  :group 'aide)
+
+(defcustom aide-top-p 0.1
+  "The top-p paramater that aide.el sends to OpenAI API."
+  :type 'float
+  :group 'aide)
+
+(defcustom aide-frequency-penalty 0
+  "The frequency_penalty paramater that aide.el sends to OpenAI API."
+  :type 'float
+  :group 'aide)
+
+(defcustom aide-presence-penalty 0
+  "The presence_penalty paramater that aide.el sends to OpenAI API."
+  :type 'float
+  :group 'aide)
+
 
 (defun aide-openai-complete (api-key prompt)
   "Return the prompt answer from OpenAI API.
@@ -50,8 +71,10 @@ PROMPT is the prompt string we send to the API."
       :type "POST"
       :data (json-encode `(("prompt" . ,prompt)
                            ("max_tokens" . ,aide-max-tokens)
-                           ("temperature" . 0)
-                           ("top_p" . 0.1)))
+                           ("temperature" . ,aide-temperature)
+                           ("frequency_penalty" . ,aide-frequency-penalty)
+                           ("presence_penalty" . ,aide-presence-penalty)
+                           ("top_p" . ,aide-top-p)))
       :headers `(("Authorization" . ,auth-value) ("Content-Type" . "application/json"))
       :sync t
       :parser 'json-read
