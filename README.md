@@ -18,6 +18,18 @@ You can also run `M-x aide-openai-completion-buffer-insert`, which grabs the cur
 
   > Note: **This command reads th ENTIRE buffer**.
 
+### Custom variables
+
+You can set the custom variables to control the aide.el behavior.
+
+To do so, you can `M-x customize`, select `External` > `aide`.
+
+Or you can set it directly in elisp:
+
+``` emacs-lisp
+(setq aide-max-tokens 200)
+```
+
 ## License
 
 See aide.el.

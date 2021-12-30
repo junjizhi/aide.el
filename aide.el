@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2021  Junji Zhi
 
-;; Author: Junji Zhi <junjizhi.to@gmail.com>
+;; Author: Junji Zhi
 ;; Keywords: gpt-3 openai
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -28,16 +28,28 @@
 
 (require 'request)
 
-(defun aide-openai-complete (api-key prompt &optional max-tokens)
-  "Returns the prompt answer from OpenAI API"
-  (or max-tokens (setq max-tokens 100))
+(defgroup aide nil
+  "aide.el custom settings"
+  :group 'external
+  :prefix "aide-")
+
+(defcustom aide-max-tokens 100
+  "The max-tokens paramater that aide.el would send to OpenAI API."
+  :type 'integer
+  :group 'aide)
+
+(defun aide-openai-complete (api-key prompt)
+  "Return the prompt answer from OpenAI API.
+API-KEY is the OpenAI API key.
+
+PROMPT is the prompt string we send to the API."
   (let ((result nil)
         (auth-value (format "Bearer %s" api-key)))
     (request
       "https://api.openai.com/v1/engines/davinci/completions"
       :type "POST"
       :data (json-encode `(("prompt" . ,prompt)
-                           ("max_tokens" . ,max-tokens)
+                           ("max_tokens" . ,aide-max-tokens)
                            ("temperature" . 0)
                            ("top_p" . 0.1)))
       :headers `(("Authorization" . ,auth-value) ("Content-Type" . "application/json"))
@@ -49,15 +61,18 @@
     result))
 
 (defun aide-openai-complete-region (start end)
-  "Send the region to OpenAI autocomplete engine and get the result"
+  "Send the region to OpenAI autocomplete engine and get the result.
+
+START and END are selected region boundaries."
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
          (result (aide--openai-complete-string region)))
     (message "%s" result)))
 
 (defun aide-openai-complete-region-insert (start end)
-  "Send the region to OpenAI autocomplete engine and insert the
-qresult to the end of buffer"
+  "Send the region to OpenAI and insert the result to the end of buffer.
+
+START and END are selected region boundaries."
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
          (result (aide--openai-complete-string region)))
@@ -65,8 +80,7 @@ qresult to the end of buffer"
     (insert (format "\n%s" result))))
 
 (defun aide-openai-complete-buffer-insert ()
-  "Send the ENTIRE buffer to OpenAI autocomplete engine and insert the
-qresult to the end of buffer"
+  "Send the ENTIRE buffer to OpenAI and insert the result to the end of buffer."
   (interactive)
   (let* ((region nil) (result nil))
     (setq region (buffer-substring-no-properties (point-min) (point-max)))
@@ -77,7 +91,7 @@ qresult to the end of buffer"
 ;; private
 
 (defun aide--openai-complete-string (string)
-  (aide-openai-complete openai-api-key string 50))
+  (aide-openai-complete openai-api-key string))
 
 (provide 'aide)
 ;;; aide.el ends here
