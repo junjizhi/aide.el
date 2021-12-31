@@ -98,27 +98,36 @@ START and END are selected region boundaries."
 START and END are selected region boundaries."
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
-         (result (aide--openai-complete-string region)))
+         (result (aide--openai-complete-string region))
+        original-point)
     (goto-char (point-max))
+    (setq original-point (point))
     (if result
         (progn
           (insert "\n" result)
-          (highlight-regexp result 'hl-todo)
-          (fill-paragraph))
+          (fill-paragraph)
+          (let ((x (make-overlay original-point (point-max))))
+            (overlay-put x 'face '(:foreground "orange red")))
+          result)
       (message "Empty result"))))
 
 (defun aide-openai-complete-buffer-insert ()
   "Send the ENTIRE buffer to OpenAI and insert the result to the end of buffer."
   (interactive)
-  (let ((region nil) (result nil))
+  (let (region
+        result
+        original-point)
     (setq region (buffer-substring-no-properties (point-min) (point-max)))
     (setq result (aide--openai-complete-string region))
     (goto-char (point-max))
+    (setq original-point (point))
     (if result
         (progn
           (insert "\n" result)
-          (highlight-regexp result 'hl-todo)
-          (fill-paragraph))
+          (fill-paragraph)
+          (let ((x (make-overlay original-point (point-max))))
+            (overlay-put x 'face '(:foreground "orange red")))
+          result)
       (message "Empty result"))))
 
 (defun aide-openai-tldr-region (start end)
