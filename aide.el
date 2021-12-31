@@ -100,18 +100,35 @@ START and END are selected region boundaries."
   (let* ((region (buffer-substring-no-properties start end))
          (result (aide--openai-complete-string region)))
     (goto-char (point-max))
-    (insert (format "\n%s" result))))
+    (if result
+        (progn
+          (insert "\n" result)
+          (highlight-regexp result 'hl-todo)
+          (fill-paragraph))
+      (message "Empty result"))))
 
 (defun aide-openai-complete-buffer-insert ()
   "Send the ENTIRE buffer to OpenAI and insert the result to the end of buffer."
   (interactive)
-  (let* ((region nil) (result nil))
+  (let ((region nil) (result nil))
     (setq region (buffer-substring-no-properties (point-min) (point-max)))
     (setq result (aide--openai-complete-string region))
     (goto-char (point-max))
-    (insert "\n" result)
-    (highlight-regexp result 'hl-todo)
-    (fill-paragraph)))
+    (if result
+        (progn
+          (insert "\n" result)
+          (highlight-regexp result 'hl-todo)
+          (fill-paragraph))
+      (message "Empty result"))))
+
+(defun aide-openai-tldr-region (start end)
+  "Send the region to OpenAI autocomplete engine and get the TLDR result.
+
+START and END are selected region boundaries."
+  (interactive "r")
+  (let* ((region (buffer-substring-no-properties start end))
+         (result (aide--openai-complete-string (concat region "\n\n tl;dr:"))))
+    (message "%s" result)))
 
 ;; private
 
