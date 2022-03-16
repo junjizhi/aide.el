@@ -178,6 +178,26 @@ START and END are selected region boundaries."
           result)
       (message "Empty result"))))
 
+(defun aide-openai-edits-region-replace (start end)
+  "Send the region to OpenAI edits and replace the region.
+
+START and END are selected region boundaries.
+
+The original content will be stored in the kill ring."
+  (interactive "r")
+  (let* ((region (buffer-substring-no-properties start end))
+         (result (aide-openai-edits openai-api-key "Rephrase the text" region)))
+    (goto-char end)
+    (if result
+        (progn
+          (kill-region start end)
+          (insert "\n" result)
+          (fill-paragraph)
+          (let ((x (make-overlay end (point))))
+            (overlay-put x 'face '(:foreground "orange red")))
+          result)
+      (message "Empty result"))))
+
 ;; private
 
 (defun aide--openai-complete-string (string)
