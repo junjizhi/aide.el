@@ -139,6 +139,45 @@ START and END are selected region boundaries."
          (result (aide--openai-complete-string (concat region "\n\n tl;dr:"))))
     (message "%s" result)))
 
+(defun aide-openai-edits (api-key instruction input)
+  "Return the edits answer from OpenAI API.
+API-KEY is the OpenAI API key.
+
+INSTRUCTION and INPUT are the two params we send to the API."
+  (let ((result nil)
+        (auth-value (format "Bearer %s" api-key)))
+    (request
+      "https://api.openai.com/v1/engines/text-davinci-edit-001/edits"
+      :type "POST"
+      :data (json-encode `(("input" . ,input)
+                           ("instruction" . ,instruction)
+                           ("temperature" . 0.9)))
+      :headers `(("Authorization" . ,auth-value)
+                 ("Content-Type" . "application/json"))
+      :sync t
+      :parser 'json-read
+      :success (cl-function
+                (lambda (&key data &allow-other-keys)
+                  (setq result (alist-get 'text (elt (alist-get 'choices data) 0))))))
+    result))
+
+(defun aide-openai-edits-region-insert (start end)
+  "Send the region to OpenAI edits and insert the result to the end of region.
+
+START and END are selected region boundaries."
+  (interactive "r")
+  (let* ((region (buffer-substring-no-properties start end))
+         (result (aide-openai-edits openai-api-key "Rephrase the text" region)))
+    (goto-char end)
+    (if result
+        (progn
+          (insert "\n" result)
+          (fill-paragraph)
+          (let ((x (make-overlay end (point))))
+            (overlay-put x 'face '(:foreground "orange red")))
+          result)
+      (message "Empty result"))))
+
 ;; private
 
 (defun aide--openai-complete-string (string)
