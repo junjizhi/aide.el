@@ -58,6 +58,12 @@
   :type 'float
   :group 'aide)
 
+(defcustom aide-completions-model "davinci"
+  "Name of the model used for completions. aide sends requests to
+the OpenAI API endpoint of this model."
+  :type 'string
+  :group 'aide
+  :options '("davinci", "text-davinci-002", "text-curie-001", "text-babbage-001", "text-ada-001"))
 
 (defun aide-openai-complete (api-key prompt)
   "Return the prompt answer from OpenAI API.
@@ -67,7 +73,7 @@ PROMPT is the prompt string we send to the API."
   (let ((result nil)
         (auth-value (format "Bearer %s" api-key)))
     (request
-      "https://api.openai.com/v1/engines/davinci/completions"
+      (format "https://api.openai.com/v1/engines/%s/completions" aide-completions-model)
       :type "POST"
       :data (json-encode `(("prompt" . ,prompt)
                            ("max_tokens" . ,aide-max-tokens)
