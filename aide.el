@@ -33,6 +33,11 @@
   :group 'external
   :prefix "aide-")
 
+(defcustom aide-ai-model "text-davinci-002"
+  "The model paramater that aide.el sends to OpenAI API."
+  :type 'string
+  :group 'aide)
+
 (defcustom aide-max-tokens 100
   "The max-tokens paramater that aide.el sends to OpenAI API."
   :type 'integer
@@ -67,9 +72,10 @@ PROMPT is the prompt string we send to the API."
   (let ((result nil)
         (auth-value (format "Bearer %s" api-key)))
     (request
-      "https://api.openai.com/v1/engines/davinci/completions"
+      "https://api.openai.com/v1/completions"
       :type "POST"
       :data (json-encode `(("prompt" . ,prompt)
+                           ("model"  . ,aide-ai-model)
                            ("max_tokens" . ,aide-max-tokens)
                            ("temperature" . ,aide-temperature)
                            ("frequency_penalty" . ,aide-frequency-penalty)
