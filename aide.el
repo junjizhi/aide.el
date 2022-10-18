@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(require 'request)
+(require 'request) ;; M-x package-install RET request RET
 
 (defgroup aide nil
   "aide.el custom settings"
