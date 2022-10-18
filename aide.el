@@ -38,7 +38,12 @@
   :type 'string
   :group 'aide)
 
-(defcustom aide-max-tokens 100
+(defcustom aide-max-input-tokens 3800
+  "The maximum number of tokens that aide.el sends to OpenAI API"
+  :type 'integer
+  :group 'aide)
+
+(defcustom aide-max-output-tokens 100
   "The max-tokens paramater that aide.el sends to OpenAI API."
   :type 'integer
   :group 'aide)
@@ -76,7 +81,7 @@ PROMPT is the prompt string we send to the API."
       :type "POST"
       :data (json-encode `(("prompt" . ,prompt)
                            ("model"  . ,aide-ai-model)
-                           ("max_tokens" . ,aide-max-tokens)
+                           ("max_tokens" . ,aide-max-output-tokens)
                            ("temperature" . ,aide-temperature)
                            ("frequency_penalty" . ,aide-frequency-penalty)
                            ("presence_penalty" . ,aide-presence-penalty)
@@ -86,8 +91,10 @@ PROMPT is the prompt string we send to the API."
       :parser 'json-read
       :success (cl-function
                 (lambda (&key data &allow-other-keys)
-                  (setq result (alist-get 'text (elt (alist-get 'choices data) 0))))))
-    result))
+                  (setq result (alist-get 'text (elt (alist-get 'choices data) 0)))))
+      :error (cl-function (lambda (&rest args &key error-thrown &allow-other-keys)
+                 (message "Got error: %S" error-thrown))))
+      result))
 
 (defun aide-openai-complete-region (start end)
   "Send the region to OpenAI autocomplete engine and get the result.
@@ -118,12 +125,12 @@ START and END are selected region boundaries."
       (message "Empty result"))))
 
 (defun aide-openai-complete-buffer-insert ()
-  "Send the ENTIRE buffer to OpenAI and insert the result to the end of buffer."
+  "Send the ENTIRE buffer, up to max tokens, to OpenAI and insert the result to the end of buffer."
   (interactive)
   (let (region
         result
         original-point)
-    (setq region (buffer-substring-no-properties (point-min) (point-max)))
+    (setq region (buffer-substring-no-properties (get-min-point) (point-max)))
     (setq result (aide--openai-complete-string region))
     (goto-char (point-max))
     (setq original-point (point))
@@ -208,6 +215,13 @@ The original content will be stored in the kill ring."
 
 (defun aide--openai-complete-string (string)
   (aide-openai-complete openai-api-key string))
+
+(defun get-min-point ()
+  "OpenAI API limits requests of > ~4000 tokens (model-specific; davinci
+maxes out at request of 4000 tokens; ~15200 char"
+  (if (> (buffer-size) (* 4 (or aide-max-input-tokens 3800))) ;; 1 tokens = ~4 char
+      (- (point-max) (* 4 (or aide-max-input-tokens 3800)))
+    (point-min)))
 
 (provide 'aide)
 ;;; aide.el ends here
