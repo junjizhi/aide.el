@@ -68,6 +68,12 @@
   :type 'float
   :group 'aide)
 
+(defcustom aide-completions-model "davinci"
+  "Name of the model used for completions. aide sends requests to
+the OpenAI API endpoint of this model."
+  :type 'string
+  :group 'aide
+  :options '("davinci", "text-davinci-002", "text-curie-001", "text-babbage-001", "text-ada-001"))
 
 (defun aide-openai-complete (api-key prompt)
   "Return the prompt answer from OpenAI API.
