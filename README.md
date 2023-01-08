@@ -17,6 +17,17 @@ I haven't uploaded aide.el to any package repo yet (e.g., MELPA), so you have to
 Copy the content of `aide.el` to Emacs and evaluate it. 
 
 
+When using [straight.el](https://github.com/radian-software/straight.el), you can install aide.el as follows:
+
+```emacs-lisp
+(use-package aide
+  :straight (aide :type git
+                   :host github
+                   :repo "junjizhi/aide.el"))
+  :custom
+  (aide-openai-api-key-getter (lambda () "YOUR API KEY HERE"))
+```
+
 ## Usage
 
 Prerequisite: set `aide-openai-api-key-getter` to to retrieve your API key for OpenAI.
@@ -29,7 +40,7 @@ Then you can select any region and run `M-x aide-openai-completion-region-insert
 
 You can also run `M-x aide-openai-completion-buffer-insert`, which grabs the current buffer as a string, send it to OpenAI API and insert the result at the end of the buffer. This is like the [OpenAI playground](https://beta.openai.com/playground) where you can run the command multiple times to continue the conversion in the same buffer.
 
-  > Note: **This command reads th ENTIRE buffer**.
+  > Note: **This command reads the ENTIRE buffer**.
 
 ### Custom variables
 
@@ -42,6 +53,52 @@ Or you can set it directly in elisp:
 ``` emacs-lisp
 (setq aide-max-tokens 200)
 ```
+
+### Using password-store to retrieve your OpenAI key
+
+You can configure auth-source to use [password store](https://www.passwordstore.org/) as a backend by setting the `auth-sources` variable to contain `password-store` through:
+
+```emacs-lisp
+(customize-set-variable 'auth-sources '(password-store))
+```
+
+or by loading and configuration the *auth-source* package with straight:
+
+```emacs-lisp
+(use-package auth-source
+  :straight (:type built-in)
+
+  :config
+  (auth-source-pass-enable))
+```
+
+
+Eventually, you can then define the `aide-openai-api-key-getter` variable to retrieve the password from your password store:
+
+```emacs-lisp
+(customize-set-variable 'aide-openai-api-key-getter (lambda ()
+    (auth-source-pass-get 'secret "openai.com/user-handle/api-key")))
+```
+
+or again, when using straight:
+
+```emacs-lisp
+(use-package aide
+  :straight (aide :type git
+                   :host github
+                   :repo "junjizhi/aide.el"))
+  :custom
+  (aide-openai-api-key-getter (lambda ()
+    (auth-source-pass-get 'secret "openai.com/user-handle/api-key")))
+```
+
+#### Why would you want to use password store?
+
+Using password store, provides you a way to avoid having to store your API key in plaintext inside of your Emacs configuration that you may want to check into version control.
+
+Furthermore, your password store may enforce a mechanism to ensure that secrets become unavailable after a certain time, warranting another passphrase prompt if a key retrieval is attempted.
+
+All these benefit, you may get for free when using a password store.
 
 ## License
 
