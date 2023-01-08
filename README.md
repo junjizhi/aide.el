@@ -22,10 +22,8 @@ When using [straight.el](https://github.com/radian-software/straight.el), you ca
 ```emacs-lisp
 (use-package aide
   :straight (aide :type git
-                   :host github
-                   :repo "junjizhi/aide.el"))
-  :custom
-  (aide-openai-api-key-getter (lambda () "YOUR API KEY HERE"))
+                  :host github
+                  :repo "junjizhi/aide.el"))
 ```
 
 ## Usage
@@ -35,6 +33,8 @@ Prerequisite: set `aide-openai-api-key-getter` to to retrieve your API key for O
 ``` emacs-lisp
 (setq aide-openai-api-key-getter (lambda () "<api-key>"))
 ```
+
+> 💡 You can use any arbitrary means to retrieve your password, you can decrypt a local GPG file, access your favorite password-store or hardcode the secret directly in your config file.
 
 Then you can select any region and run `M-x aide-openai-completion-region-insert`.
 
@@ -56,13 +56,13 @@ Or you can set it directly in elisp:
 
 ### Using password-store to retrieve your OpenAI key
 
-You can configure auth-source to use [password store](https://www.passwordstore.org/) as a backend by setting the `auth-sources` variable to contain `password-store` through:
+You can configure auth-source to use [password store](https://www.passwordstore.org/) as a backend through the following function call:
 
 ```emacs-lisp
-(customize-set-variable 'auth-sources '(password-store))
+(auth-source-pass-enable)
 ```
 
-or by loading and configuration the *auth-source* package with straight:
+Straight.el users, can load and configuration the *auth-source* package as follows:
 
 ```emacs-lisp
 (use-package auth-source
@@ -73,10 +73,12 @@ or by loading and configuration the *auth-source* package with straight:
 ```
 
 
-Eventually, you can then define the `aide-openai-api-key-getter` variable to retrieve the password from your password store:
+Eventually, you can define the `aide-openai-api-key-getter` custom variable to retrieve the password from your password store:
 
 ```emacs-lisp
-(customize-set-variable 'aide-openai-api-key-getter (lambda ()
+(customize-set-variable
+  'aide-openai-api-key-getter
+  (lambda ()
     (auth-source-pass-get 'secret "openai.com/user-handle/api-key")))
 ```
 
@@ -85,11 +87,11 @@ or again, when using straight:
 ```emacs-lisp
 (use-package aide
   :straight (aide :type git
-                   :host github
-                   :repo "junjizhi/aide.el"))
+                  :host github
+                  :repo "junjizhi/aide.el")
   :custom
   (aide-openai-api-key-getter (lambda ()
-    (auth-source-pass-get 'secret "openai.com/user-handle/api-key")))
+                                (auth-source-pass-get 'secret "openai.com/user-handle/api-key"))))
 ```
 
 #### Why would you want to use password store?
