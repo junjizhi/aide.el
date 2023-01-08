@@ -65,7 +65,7 @@ the OpenAI API endpoint of this model."
   :group 'aide
   :options '("davinci", "text-davinci-002", "text-curie-001", "text-babbage-001", "text-ada-001"))
 
-(defcustom aide-openai-api-key-getter (lambda () "")
+(defcustom aide-openai-api-key-getter (lambda () openai-api-key)
   "Function that retrieves the valid OpenAI API key"
   :type 'function
   :group 'aide)
