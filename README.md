@@ -19,10 +19,10 @@ Copy the content of `aide.el` to Emacs and evaluate it.
 
 ## Usage
 
-Prerequisite:
+Prerequisite: set `aide-openai-api-key-getter` to to retrieve your API key for OpenAI.
 
 ``` emacs-lisp
-(setq openai-api-key "<api-key>")
+(setq aide-openai-api-key-getter (lambda () "<api-key>"))
 ```
 
 Then you can select any region and run `M-x aide-openai-completion-region-insert`.
