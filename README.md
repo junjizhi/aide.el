@@ -34,11 +34,12 @@ Prerequisite: set `aide-openai-api-key-getter` to to retrieve your API key for O
 (setq aide-openai-api-key-getter (lambda () "<api-key>"))
 ```
 
+
 > 💡 You can use any arbitrary means to retrieve your password, you can decrypt a local GPG file, access your favorite password-store or hardcode the secret directly in your config file.
 
 Then you can select any region and run `M-x aide-openai-completion-region-insert`.
 
-You can also run `M-x aide-openai-completion-buffer-insert`, which grabs the current buffer as a string, send it to OpenAI API and insert the result at the end of the buffer. This is like the [OpenAI playground](https://beta.openai.com/playground) where you can run the command multiple times to continue the conversion in the same buffer.
+You can also run `M-x aide-openai-complete-buffer-insert`, which grabs the current buffer as a string, send it to OpenAI API and insert the result at the end of the buffer. This is like the [OpenAI playground](https://beta.openai.com/playground) where you can run the command multiple times to continue the conversion in the same buffer.
 
   > Note: **This command reads the ENTIRE buffer**.
 
