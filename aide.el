@@ -65,6 +65,11 @@ the OpenAI API endpoint of this model."
   :group 'aide
   :options '("davinci", "text-davinci-002", "text-curie-001", "text-babbage-001", "text-ada-001"))
 
+(defcustom aide-openai-api-key-getter (lambda () openai-api-key)
+  "Function that retrieves the valid OpenAI API key"
+  :type 'function
+  :group 'aide)
+
 (defun aide-openai-complete (api-key prompt)
   "Return the prompt answer from OpenAI API.
 API-KEY is the OpenAI API key.
@@ -173,7 +178,7 @@ INSTRUCTION and INPUT are the two params we send to the API."
 START and END are selected region boundaries."
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
-         (result (aide-openai-edits openai-api-key "Rephrase the text" region)))
+         (result (aide-openai-edits (funcall aide-openai-api-key-getter) "Rephrase the text" region)))
     (goto-char end)
     (if result
         (progn
@@ -192,7 +197,7 @@ START and END are selected region boundaries.
 The original content will be stored in the kill ring."
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
-         (result (aide-openai-edits openai-api-key "Rephrase the text" region)))
+         (result (aide-openai-edits (funcall aide-openai-api-key-getter) "Rephrase the text" region)))
     (goto-char end)
     (if result
         (progn
@@ -207,7 +212,7 @@ The original content will be stored in the kill ring."
 ;; private
 
 (defun aide--openai-complete-string (string)
-  (aide-openai-complete openai-api-key string))
+  (aide-openai-complete (funcall aide-openai-api-key-getter) string))
 
 (provide 'aide)
 ;;; aide.el ends here
