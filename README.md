@@ -1,8 +1,12 @@
 # aide.el
 
+> 🆕 aide.el now supports calling [OpenAI chat API endpoint](https://platform.openai.com/docs/api-reference/chat), which uses   `gpt-3.5-turbo` model by default. Check out the `aide-openai-chat` function!  
+
+
 An Emacs front end for GPT APIs like OpenAI.
 
   > Note: This is still alpha software. Use with caution.
+
 
 ## Demo
 

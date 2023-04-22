@@ -33,10 +33,16 @@
   :group 'external
   :prefix "aide-")
 
-(defcustom aide-ai-model "text-davinci-002"
-  "The model paramater that aide.el sends to OpenAI API."
+(defcustom aide-ai-model "text-davinci-003"
+  "The model paramater that aide.el sends to all OpenAI API endpoints (except Chat API)."
   :type 'string
   :group 'aide)
+
+(defcustom aide-chat-model "gpt-3.5-turbo"
+  "The model paramater that aide.el sends to OpenAI Chat API."
+  :type 'string
+  :group 'aide)
+
 
 (defcustom aide-max-input-tokens 3800
   "The maximum number of tokens that aide.el sends to OpenAI API"
@@ -107,6 +113,30 @@ PROMPT is the prompt string we send to the API."
                  (message "Got error: %S" error-thrown))))
       result))
 
+(defun aide-openai-chat (api-key prompt)
+  "Return the prompt answer from OpenAI API.
+API-KEY is the OpenAI API key.
+
+PROMPT is the prompt string we send to the API."
+  (let ((result nil)
+        (auth-value (format "Bearer %s" api-key))
+        (payload (json-encode `(("model"  . ,aide-chat-model)
+                              ("messages" . [(("role" . "user") ("content" . ,prompt))])))))
+    (request
+      "https://api.openai.com/v1/chat/completions"
+      :type "POST"
+      :data payload
+      :headers `(("Authorization" . ,auth-value) ("Content-Type" . "application/json"))
+      :sync t
+      :parser 'json-read
+      :success (cl-function
+                (lambda (&key data &allow-other-keys)
+                  (setq result (alist-get 'content (alist-get 'message (elt (alist-get 'choices data) 0))))))
+      :error (cl-function (lambda (&rest args &key error-thrown &allow-other-keys)
+                 (message "Got error: %S, payload: %S" error-thrown payload))))
+      result))
+
+
 (defun aide-openai-complete-region (start end)
   "Send the region to OpenAI autocomplete engine and get the result.
 
@@ -134,6 +164,26 @@ START and END are selected region boundaries."
             (overlay-put x 'face '(:foreground "orange red")))
           result)
       (message "Empty result"))))
+
+(defun aide-openai-chat-region-insert (start end)
+  "Send the region to OpenAI Chat API and insert the result to the end of buffer.
+
+START and END are selected region boundaries."
+  (interactive "r")
+  (let* ((region (buffer-substring-no-properties start end))
+         (result (aide--openai-chat-string region))
+        original-point)
+    (goto-char (point-max))
+    (setq original-point (point))
+    (if result
+        (progn
+          (insert "\n" result)
+          (fill-paragraph)
+          (let ((x (make-overlay original-point (point-max))))
+            (overlay-put x 'face '(:foreground "orange red")))
+          result)
+      (message "Empty result"))))
+
 
 (defun aide-openai-complete-buffer-insert ()
   "Send the ENTIRE buffer, up to max tokens, to OpenAI and insert the result to the end of buffer."
@@ -226,6 +276,9 @@ The original content will be stored in the kill ring."
 
 (defun aide--openai-complete-string (string)
   (aide-openai-complete (funcall aide-openai-api-key-getter) string))
+
+(defun aide--openai-chat-string (string)
+  (aide-openai-chat (funcall aide-openai-api-key-getter) string))
 
 (defun get-min-point ()
   "OpenAI API limits requests of > ~4000 tokens (model-specific; davinci
