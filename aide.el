@@ -169,37 +169,49 @@ START and END are selected region boundaries."
           result)
       (message "Empty result"))))
 
-(defun aide-openai-chat-region-insert (start end &optional output-as-org-text highlight-result)
+(defun aide-openai-chat-region-insert (start end)
   "Send the region to OpenAI Chat API and insert the result to the end of buffer.
 
-START and END are selected region boundaries.
+The function is smart to check if current buffer in org mode, and present result accordingly.
 
-OUTPUT-AS-ORG-TEXT defaults to true. If the flag is true, we enhance the
-prompt to make sure OpenAI responses are formatted as org-mode
-text.
+START and END are selected region boundaries.
 "
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
+         (is-in-org-mode (string-equal major-mode "org-mode"))
          (extra-conditions "\"\n\nIn your response, limit the characters to 80 characters
 per line for text explanations and add line breaks if needed. Do not apply the character limit to code blocks.")
-         (enhanced-prompt (concat "Please help me with the following question:\n\n \"" region extra-conditions))
+         (final-prompt (concat "Please help me with the following question:\n\n \"" region extra-conditions))
          original-point)
-    (setq output-as-org-text (if (null output-as-org-text) t ouput-as-org-text))
-    (setq final-prompt (if output-as-org-text enhanced-prompt region))
     (goto-char (point-max))
     (setq original-point (point))
     (aide--openai-chat-string final-prompt (lambda (result)
                                        (if result
                                            (progn
-                                             (insert "\n\n>>> GPT:\n#+BEGIN_SRC markdown\n" result "\n#+END_SRC")
-                                             (fill-paragraph)
-                                             (if highlight-result
+                                             (if is-in-org-mode
+                                                 (insert "\n\n>>> GPT:\n#+BEGIN_SRC markdown\n" result "\n#+END_SRC")
+                                               (insert "\n\n>>> GPT: " result))
+                                             (if is-in-org-mode
+                                                 nil
                                                  (let ((x (make-overlay original-point (point-max))))
                                                    (overlay-put x 'face '(:foreground "orange red"))
-                                               (deactivate-mark))
-                                               nil)
+                                               (deactivate-mark)))
                                              result)
                                          (message "Empty result"))))))
+
+(defun aide-openai-chat-paragraph-insert ()
+  "Send the current paragraph to OpenAI Chat API and append the result to the end of the buffer
+"
+  (interactive)
+  (let (region-start
+        region-end)
+    (save-excursion
+      (backward-paragraph)
+      (setq region-start (point))
+      (forward-paragraph)
+      (setq region-end (point))
+      )
+    (aide-openai-chat-region-insert region-start region-end)))
 
 
 (defun aide-openai-complete-buffer-insert ()
