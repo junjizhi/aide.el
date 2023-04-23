@@ -118,7 +118,7 @@ PROMPT is the prompt string we send to the API."
 API-KEY is the OpenAI API key.
 
 PROMPT is the prompt string we send to the API."
-  (let ((result nil)
+  (let* ((result nil)
         (auth-value (format "Bearer %s" api-key))
         (payload (json-encode `(("model"  . ,aide-chat-model)
                               ("messages" . [(("role" . "user") ("content" . ,prompt))])))))
@@ -169,19 +169,29 @@ START and END are selected region boundaries."
           result)
       (message "Empty result"))))
 
-(defun aide-openai-chat-region-insert (start end)
+(defun aide-openai-chat-region-insert (start end &optional output-as-org-text)
   "Send the region to OpenAI Chat API and insert the result to the end of buffer.
 
-START and END are selected region boundaries."
+START and END are selected region boundaries.
+
+OUTPUT-AS-ORG-TEXT defaults to true. If the flag is true, we enhance the
+prompt to make sure OpenAI responses are formatted as org-mode
+text.
+"
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
+         (extra-conditions "\"\n\nIn your response, limit the characters to 80 characters
+per line for text explanations and add line breaks if needed. Do not apply the character limit to any code, or format any code. The code snippets should be in org-mode code blocks, like '#+BEGIN_SRC'.")
+         (enhanced-prompt (concat "Please help me with the following question:\n\n \"" region extra-conditions))
          original-point)
+    (setq output-as-org-text (if (null output-as-org-text) t ouput-as-org-text))
+    (setq final-prompt (if output-as-org-text enhanced-prompt region))
     (goto-char (point-max))
     (setq original-point (point))
-    (aide--openai-chat-string region (lambda (result)
+    (aide--openai-chat-string final-prompt (lambda (result)
                                        (if result
                                            (progn
-                                             (insert "\n\n" result)
+                                             (insert "\n\nGPT: " result)
                                              (fill-paragraph)
                                              (let ((x (make-overlay original-point (point-max))))
                                                (overlay-put x 'face '(:foreground "orange red"))
