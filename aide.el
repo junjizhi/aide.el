@@ -182,10 +182,19 @@ START and END are selected region boundaries.
          (extra-conditions "\"\n\nIn your response, limit the characters to 80 characters
 per line for text explanations and add line breaks if needed. Do not apply the character limit to code blocks.")
          (final-prompt (concat "Please help me with the following question:\n\n \"" region extra-conditions))
-         original-point)
+         original-point
+         tmp-text-end-point)
     (goto-char (point-max))
     (setq original-point (point))
+    (insert "\n\n>>> GPT: Generating response... (This is placeholder text. It will disppear. DO NOT edit.)")
+    (setq tmp-text-end-point (point))
+
+    (let ((x (make-overlay original-point tmp-text-end-point)))
+      (overlay-put x 'face '(:foreground "lime green"))
+      (deactivate-mark))
+
     (aide--openai-chat-string final-prompt (lambda (result)
+                                             (delete-region original-point tmp-text-end-point)
                                        (if result
                                            (progn
                                              (if is-in-org-mode
