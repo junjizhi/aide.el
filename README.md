@@ -1,16 +1,21 @@
 # aide.el
 
-> 🆕 aide.el now supports calling [OpenAI chat API endpoint](https://platform.openai.com/docs/api-reference/chat), which uses   `gpt-3.5-turbo` model by default. Check out the `aide-openai-chat` function!  
-
-
 An Emacs front end for GPT APIs like OpenAI.
 
   > Note: This is still alpha software. Use with caution.
 
 
-## Demo
+## Demos
 
-![aide.ei-demo](https://user-images.githubusercontent.com/2715151/147772615-da36b3ab-a32a-4f7f-b185-e62f3972f8b7.gif)
+### Chat API
+🆕 aide.el now supports [OpenAI chat API endpoint](https://platform.openai.com/docs/api-reference/chat), which uses   `gpt-3.5-turbo` model by default. Check out the demo below:
+
+
+![aide-demo-2023-04-23 17 51 12](https://user-images.githubusercontent.com/2715151/233868185-def7bae5-8eb4-4150-a7c5-6e40c5ba516e.gif)
+
+
+### Completion API
+![aide-demo-completion-api](https://user-images.githubusercontent.com/2715151/147772615-da36b3ab-a32a-4f7f-b185-e62f3972f8b7.gif). 
 
 ## Installation
 
@@ -32,7 +37,7 @@ When using [straight.el](https://github.com/radian-software/straight.el), you ca
 
 ## Usage
 
-Prerequisite: set `aide-openai-api-key-getter` to to retrieve your API key for OpenAI.
+Prerequisite: set `aide-openai-api-key-getter` to retrieve your API key for OpenAI.
 
 ``` emacs-lisp
 (setq aide-openai-api-key-getter (lambda () "<api-key>"))

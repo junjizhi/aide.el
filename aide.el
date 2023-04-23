@@ -113,25 +113,29 @@ PROMPT is the prompt string we send to the API."
                  (message "Got error: %S" error-thrown))))
       result))
 
-(defun aide-openai-chat (api-key prompt)
+(defun aide-openai-chat (api-key prompt callback)
   "Return the prompt answer from OpenAI API.
 API-KEY is the OpenAI API key.
 
 PROMPT is the prompt string we send to the API."
-  (let ((result nil)
+  (let* ((result nil)
         (auth-value (format "Bearer %s" api-key))
         (payload (json-encode `(("model"  . ,aide-chat-model)
                               ("messages" . [(("role" . "user") ("content" . ,prompt))])))))
+    (message "Waiting for OpenAI...")
     (request
       "https://api.openai.com/v1/chat/completions"
       :type "POST"
       :data payload
       :headers `(("Authorization" . ,auth-value) ("Content-Type" . "application/json"))
-      :sync t
+      :sync nil
       :parser 'json-read
       :success (cl-function
                 (lambda (&key data &allow-other-keys)
-                  (setq result (alist-get 'content (alist-get 'message (elt (alist-get 'choices data) 0))))))
+                  (progn
+                    (setq result (alist-get 'content (alist-get 'message (elt (alist-get 'choices data) 0))))
+                    (funcall callback result)
+                    (message "Done."))))
       :error (cl-function (lambda (&rest args &key error-thrown &allow-other-keys)
                  (message "Got error: %S, payload: %S" error-thrown payload))))
       result))
@@ -168,21 +172,55 @@ START and END are selected region boundaries."
 (defun aide-openai-chat-region-insert (start end)
   "Send the region to OpenAI Chat API and insert the result to the end of buffer.
 
-START and END are selected region boundaries."
+The function is smart to check if current buffer in org mode, and present result accordingly.
+
+START and END are selected region boundaries.
+"
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
-         (result (aide--openai-chat-string region))
-        original-point)
+         (is-in-org-mode (string-equal major-mode "org-mode"))
+         (extra-conditions "\"\n\nIn your response, limit the characters to 80 characters
+per line for text explanations and add line breaks if needed. Do not apply the character limit to code blocks.")
+         (final-prompt (concat "Please help me with the following question:\n\n \"" region extra-conditions))
+         original-point
+         tmp-text-end-point)
     (goto-char (point-max))
     (setq original-point (point))
-    (if result
-        (progn
-          (insert "\n" result)
-          (fill-paragraph)
-          (let ((x (make-overlay original-point (point-max))))
-            (overlay-put x 'face '(:foreground "orange red")))
-          result)
-      (message "Empty result"))))
+    (insert "\n\n>>> GPT: Generating response... (This is placeholder text. It will disppear. DO NOT edit.)")
+    (setq tmp-text-end-point (point))
+
+    (let ((x (make-overlay original-point tmp-text-end-point)))
+      (overlay-put x 'face '(:foreground "lime green"))
+      (deactivate-mark))
+
+    (aide--openai-chat-string final-prompt (lambda (result)
+                                             (delete-region original-point tmp-text-end-point)
+                                       (if result
+                                           (progn
+                                             (if is-in-org-mode
+                                                 (insert "\n\n>>> GPT:\n#+BEGIN_SRC markdown\n" result "\n#+END_SRC")
+                                               (insert "\n\n>>> GPT: " result))
+                                             (if is-in-org-mode
+                                                 nil
+                                                 (let ((x (make-overlay original-point (point-max))))
+                                                   (overlay-put x 'face '(:foreground "orange red"))
+                                               (deactivate-mark)))
+                                             result)
+                                         (message "Empty result"))))))
+
+(defun aide-openai-chat-paragraph-insert ()
+  "Send the current paragraph to OpenAI Chat API and append the result to the end of the buffer
+"
+  (interactive)
+  (let (region-start
+        region-end)
+    (save-excursion
+      (backward-paragraph)
+      (setq region-start (point))
+      (forward-paragraph)
+      (setq region-end (point))
+      )
+    (aide-openai-chat-region-insert region-start region-end)))
 
 
 (defun aide-openai-complete-buffer-insert ()
@@ -277,8 +315,8 @@ The original content will be stored in the kill ring."
 (defun aide--openai-complete-string (string)
   (aide-openai-complete (funcall aide-openai-api-key-getter) string))
 
-(defun aide--openai-chat-string (string)
-  (aide-openai-chat (funcall aide-openai-api-key-getter) string))
+(defun aide--openai-chat-string (string callback)
+  (aide-openai-chat (funcall aide-openai-api-key-getter) string callback))
 
 (defun get-min-point ()
   "OpenAI API limits requests of > ~4000 tokens (model-specific; davinci
