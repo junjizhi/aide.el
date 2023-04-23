@@ -113,7 +113,7 @@ PROMPT is the prompt string we send to the API."
                  (message "Got error: %S" error-thrown))))
       result))
 
-(defun aide-openai-chat (api-key prompt)
+(defun aide-openai-chat (api-key prompt callback)
   "Return the prompt answer from OpenAI API.
 API-KEY is the OpenAI API key.
 
@@ -122,16 +122,20 @@ PROMPT is the prompt string we send to the API."
         (auth-value (format "Bearer %s" api-key))
         (payload (json-encode `(("model"  . ,aide-chat-model)
                               ("messages" . [(("role" . "user") ("content" . ,prompt))])))))
+    (message "Waiting for OpenAI...")
     (request
       "https://api.openai.com/v1/chat/completions"
       :type "POST"
       :data payload
       :headers `(("Authorization" . ,auth-value) ("Content-Type" . "application/json"))
-      :sync t
+      :sync nil
       :parser 'json-read
       :success (cl-function
                 (lambda (&key data &allow-other-keys)
-                  (setq result (alist-get 'content (alist-get 'message (elt (alist-get 'choices data) 0))))))
+                  (progn
+                    (setq result (alist-get 'content (alist-get 'message (elt (alist-get 'choices data) 0))))
+                    (funcall callback result)
+                    (message "Done."))))
       :error (cl-function (lambda (&rest args &key error-thrown &allow-other-keys)
                  (message "Got error: %S, payload: %S" error-thrown payload))))
       result))
@@ -171,18 +175,19 @@ START and END are selected region boundaries."
 START and END are selected region boundaries."
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
-         (result (aide--openai-chat-string region))
-        original-point)
+         original-point)
     (goto-char (point-max))
     (setq original-point (point))
-    (if result
-        (progn
-          (insert "\n" result)
-          (fill-paragraph)
-          (let ((x (make-overlay original-point (point-max))))
-            (overlay-put x 'face '(:foreground "orange red")))
-          result)
-      (message "Empty result"))))
+    (aide--openai-chat-string region (lambda (result)
+                                       (if result
+                                           (progn
+                                             (insert "\n\n" result)
+                                             (fill-paragraph)
+                                             (let ((x (make-overlay original-point (point-max))))
+                                               (overlay-put x 'face '(:foreground "orange red"))
+                                               (deactivate-mark))
+                                             result)
+                                         (message "Empty result"))))))
 
 
 (defun aide-openai-complete-buffer-insert ()
@@ -277,8 +282,8 @@ The original content will be stored in the kill ring."
 (defun aide--openai-complete-string (string)
   (aide-openai-complete (funcall aide-openai-api-key-getter) string))
 
-(defun aide--openai-chat-string (string)
-  (aide-openai-chat (funcall aide-openai-api-key-getter) string))
+(defun aide--openai-chat-string (string callback)
+  (aide-openai-chat (funcall aide-openai-api-key-getter) string callback))
 
 (defun get-min-point ()
   "OpenAI API limits requests of > ~4000 tokens (model-specific; davinci
