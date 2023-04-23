@@ -169,7 +169,7 @@ START and END are selected region boundaries."
           result)
       (message "Empty result"))))
 
-(defun aide-openai-chat-region-insert (start end &optional output-as-org-text)
+(defun aide-openai-chat-region-insert (start end &optional output-as-org-text highlight-result)
   "Send the region to OpenAI Chat API and insert the result to the end of buffer.
 
 START and END are selected region boundaries.
@@ -181,7 +181,7 @@ text.
   (interactive "r")
   (let* ((region (buffer-substring-no-properties start end))
          (extra-conditions "\"\n\nIn your response, limit the characters to 80 characters
-per line for text explanations and add line breaks if needed. Do not apply the character limit to any code, or format any code. The code snippets should be in org-mode code blocks, like '#+BEGIN_SRC'.")
+per line for text explanations and add line breaks if needed. Do not apply the character limit to code blocks.")
          (enhanced-prompt (concat "Please help me with the following question:\n\n \"" region extra-conditions))
          original-point)
     (setq output-as-org-text (if (null output-as-org-text) t ouput-as-org-text))
@@ -191,11 +191,13 @@ per line for text explanations and add line breaks if needed. Do not apply the c
     (aide--openai-chat-string final-prompt (lambda (result)
                                        (if result
                                            (progn
-                                             (insert "\n\nGPT: " result)
+                                             (insert "\n\n>>> GPT:\n#+BEGIN_SRC markdown\n" result "\n#+END_SRC")
                                              (fill-paragraph)
-                                             (let ((x (make-overlay original-point (point-max))))
-                                               (overlay-put x 'face '(:foreground "orange red"))
+                                             (if highlight-result
+                                                 (let ((x (make-overlay original-point (point-max))))
+                                                   (overlay-put x 'face '(:foreground "orange red"))
                                                (deactivate-mark))
+                                               nil)
                                              result)
                                          (message "Empty result"))))))
 
